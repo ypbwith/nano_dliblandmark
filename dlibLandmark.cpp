@@ -19,8 +19,8 @@ using namespace std;
 // Specifying minimum and maximum size parameters
 #define MIN_FACE_SIZE 5
 #define MAX_FACE_SIZE 400
-#define SKIPFRAME 1
-#define RATIO 6
+#define SKIPFRAME 5
+#define RATIO 4
 #define AlarmLevel 0.2
 #define AlarmCount 30
 int alarmCount = 0;
@@ -134,6 +134,9 @@ int main(int argc, char **argv)
         vector<Rect> faces;
 
         double eyesClosedLevel_filter[100];
+
+        bool detectflag = 0;
+         bool ok = 0  ;
         while (1)
         {
             // Reading each frame
@@ -191,16 +194,16 @@ int main(int argc, char **argv)
                      tracker = Tracker::create(trackerType);
                      tracker->init(frame, bbox);
                      bool ok = tracker->update(frame, bbox);
+
+                     detectflag = 1;
+                     ok = 1;
                 }
             }
 
 
             // Start timer
             //double timer = (double)getTickCount();
-
-            // Update the tracking result
-            bool ok = tracker->update(frame, bbox);
-
+            ok = tracker->update(frame, bbox);
 
             // Calculating the dimension parameters for eyes from the dimensions parameters of the face
             //Rect eyesRect = Rect( bbox.x + 0.125* bbox.width,  bbox.y + 0.25 *  bbox.height, 0.75 * bbox.width,
@@ -215,8 +218,6 @@ int main(int argc, char **argv)
 
             if (ok)
             {
-
-
                 // Tracking success : Draw the tracked object
                 //rectangle(frame, bbox, Scalar(255, 0, 0), 2, 1);
                 facePostion.set_left(bbox.x);
@@ -236,15 +237,18 @@ int main(int argc, char **argv)
                 dlib::full_object_detection shape = pose_model(cframeBig, r);
                 shapes.push_back(shape);
 
-               const dlib::full_object_detection & d = shapes[0];
-               
-                render_face(frameBig, shape);
- /*               facebox.y = r.top() * RATIO;
-                facebox.x = r.left() * RATIO;
-                facebox.width = r.right()* RATIO - facebox.x;
-                facebox.height = r.bottom() * RATIO - facebox.y;
+
+                //render_face(frameBig, shape);
+                facebox.y = r.top();
+                facebox.x = r.left();
+                facebox.width = r.right() - facebox.x;
+                facebox.height = r.bottom()  - facebox.y;
                 cv::rectangle(frameBig, facebox, Scalar(255, 0, 0), 2, 1);
 
+               const dlib::full_object_detection & d = shapes[0];
+
+
+ /*
                for (int i = 0; i < d.num_parts(); i++)
                {
                    last_object[i].x = d.part(i).x();
@@ -314,11 +318,11 @@ int main(int argc, char **argv)
                    //resize(eye_left,eye_left_24x24,Size(64,64),0,0,CV_INTER_LINEAR);
                    char im_str[sizeof("eye_close/im%06d.jpg")];
                    sprintf(im_str,"eye_close/im%06d.jpg", im_mum);
-                   //imwrite(im_str,eye_left_24x24); //c°æ±¾ÖÐµÄ±£´æÍ¼Æ¬ÎªcvSaveImage()º¯Êý£¬c++°æ±¾ÖÐÖ±½ÓÓëmatlabµÄÏàËÆ£¬imwrite()º¯Êý¡£
+                   //imwrite(im_str,eye_left_24x24); //cç‰ˆæœ¬ä¸­çš„ä¿å­˜å›¾ç‰‡ä¸ºcvSaveImage()å‡½æ•°ï¼Œc++ç‰ˆæœ¬ä¸­ç›´æŽ¥ä¸Žmatlabçš„ç›¸ä¼¼ï¼Œimwrite()å‡½æ•°ã€‚
                    //imshow( "face", eye_left );
                }
 
-          
+
 
               for (int i = 36; i <= 41; i++)
               {
@@ -395,8 +399,8 @@ int main(int argc, char **argv)
            else
            {
                alarmCount = 0;
-           }  
-         
+           }
+
 
            char PutString[20]={0};
            sprintf(PutString, "eyeCloseLevel:%f\n", eyesClosedLevel);
