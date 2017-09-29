@@ -17,10 +17,10 @@ using namespace std;
 
 
 // Specifying minimum and maximum size parameters
-#define MIN_FACE_SIZE 5
+#define MIN_FACE_SIZE 0
 #define MAX_FACE_SIZE 400
 #define SKIPFRAME 5
-#define RATIO 4
+#define RATIO 1
 #define AlarmLevel 0.2
 #define AlarmCount 30
 int alarmCount = 0;
@@ -82,6 +82,18 @@ void render_face(cv::Mat &img, const dlib::full_object_detection& d)
 
 }
 
+void draw_Point(cv::Mat &img, const dlib::full_object_detection& d)
+{
+    std::vector <cv::Point> points;
+    for (int i = 0 ;i <= 4; ++i)
+    {
+        //points.push_back(cv::Point(d.part(i).x(), d.part(i).y()));
+        cv::circle(img, cv::Point(d.part(i).x(), d.part(i).y()), 4, cv::Scalar(255, 0, 0), 1, 16);
+    }
+
+
+
+}
 
 int main(int argc, char **argv)
 {
@@ -94,12 +106,12 @@ int main(int argc, char **argv)
     {
         //---------------------------------shape pridector -----------------------------
         dlib::shape_predictor pose_model;
-        dlib::deserialize("shape_predictor_68_face_landmarks.dat") >> pose_model;
+        dlib::deserialize("shape_predictor_5_face_landmarks.dat") >> pose_model;
 
         dlib::rectangle facePostion(0, 0, 0, 0);
         //-------------------------------------face detector-----------------------------
         // Load the Cascade Classifier Xml file
-        CascadeClassifier faceCascade("cascade/haarcascade_frontalface_alt.xml");
+        CascadeClassifier faceCascade("cascade/haarcascade_lefteye_2splits.xml");
 
         // Create a VideoCapture object
         VideoCapture cap(0);
@@ -137,6 +149,7 @@ int main(int argc, char **argv)
 
         bool detectflag = 0;
          bool ok = 0  ;
+
         while (1)
         {
             // Reading each frame
@@ -215,6 +228,18 @@ int main(int argc, char **argv)
             // Calculate Frames per second (FPS)
             //float fps = getTickFrequency() / ((double)getTickCount() - timer);
 
+              cv::Rect2d eyebox(int(10),int(10),int(240 ),int(240));
+            cv::Mat eye_left(frameBig,eyebox  );
+            cv::Mat eye_left_24x24;
+
+            resize(eye_left, eye_left_24x24, cv::Size(24, 24), 0, 0, CV_INTER_LINEAR);
+
+            cv::cvtColor(eye_left_24x24,eye_left_24x24,CV_BGR2GRAY);
+
+            char im_str[sizeof("noeye/imc%d.jpg           ")];
+            sprintf(im_str, "noeye/imc%d.jpg", im_mum++);
+            cv::imwrite(im_str,eye_left_24x24);
+
 
             if (ok)
             {
@@ -232,11 +257,13 @@ int main(int argc, char **argv)
                                    (long)(facePostion.bottom() * RATIO)
                                );
 
-                // Landmark detection on full sized image
-                std::vector<dlib::full_object_detection> shapes;
-                dlib::full_object_detection shape = pose_model(cframeBig, r);
+               //Landmark detection on full sized image
+               std::vector<dlib::full_object_detection> shapes;
+               dlib::full_object_detection shape = pose_model(cframeBig, r);
                 shapes.push_back(shape);
-
+                const dlib::full_object_detection & d = shapes[0];
+                //cout<<d.part(0).x()<<endl;
+                draw_Point(frameBig, shape);
 
                 //render_face(frameBig, shape);
                 facebox.y = r.top();
@@ -245,7 +272,7 @@ int main(int argc, char **argv)
                 facebox.height = r.bottom()  - facebox.y;
                 cv::rectangle(frameBig, facebox, Scalar(255, 0, 0), 2, 1);
 
-               const dlib::full_object_detection & d = shapes[0];
+               //const dlib::full_object_detection & d = shapes[0];
 
 
  /*
